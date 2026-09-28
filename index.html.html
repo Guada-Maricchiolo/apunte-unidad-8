@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manejo de errores en Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --paper:#EFF1EF; --board:#FFFFFF; --ink:#1A1E1C; --ink2:#535B56; --ink3:#7C837E;
+  --rule:#D4D9D4; --rule2:#E6E9E6;
+  --red:#C0392B; --blue:#1E5FA6; --green:#2C7A4B; --violet:#6B4EA8; --amber:#B4711A;
+  --hl:#FBEB8A; --hl2:#F6BEDF;
+  --sans:'Archivo',system-ui,sans-serif;
+  --serif:'Source Serif 4',Georgia,serif;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:78px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.65;
+  background-image:linear-gradient(var(--rule2) 1px,transparent 1px),linear-gradient(90deg,var(--rule2) 1px,transparent 1px);
+  background-size:28px 28px;}
+h1,h2,h3,h4,.ui{font-family:var(--sans);letter-spacing:-.015em}
+h2{font-size:30px;font-weight:700;line-height:1.15;margin:0 0 6px}
+h3{font-size:21px;font-weight:700;margin:34px 0 8px}
+h4{font-size:16px;font-weight:700;margin:20px 0 6px}
+p{margin:0 0 14px}
+mark{background:var(--hl);padding:.06em .18em;border-radius:2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+mark.p{background:var(--hl2)}
+code,.f{font-family:var(--mono);font-size:.88em}
+a{color:var(--blue)}
+button{font-family:var(--sans);cursor:pointer}
+:focus-visible{outline:2.5px solid var(--blue);outline-offset:2px}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:216px minmax(0,1fr);gap:44px}
+.side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:26px 0 40px}
+.main{padding:26px 0 90px;max-width:74ch;min-width:0}
+@media(max-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:0;padding:0 16px}
+  .side{min-width:0;position:sticky;top:0;height:auto;background:var(--board);border-bottom:1px solid var(--rule);margin:0 -16px;padding:8px 12px;z-index:50}
+  .sidehead{display:none}
+  .toc{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+  .toc::-webkit-scrollbar{display:none}
+  .toc a{white-space:nowrap;border:1px solid var(--rule);border-radius:999px;padding:5px 11px!important;font-size:12px}
+  .toc a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .prog{margin:8px 0 0}
+}
+.sidehead{font-family:var(--sans);font-size:12px;font-weight:700;color:var(--ink3);margin:0 0 10px}
+.toc a{display:block;font-family:var(--sans);font-size:13.5px;color:var(--ink2);text-decoration:none;padding:5px 0 5px 14px;border-left:2px solid var(--rule)}
+.toc a.on{color:var(--ink);border-left-color:var(--violet);font-weight:500}
+.prog{margin-top:18px;font-family:var(--sans);font-size:12px;color:var(--ink3)}
+.pbar{height:5px;background:var(--rule);border-radius:3px;overflow:hidden;margin-top:6px}
+.pbar i{display:block;height:100%;width:0;background:var(--green);transition:width .45s ease}
+
+.hero{border-bottom:3px solid var(--ink);padding-bottom:22px;margin-bottom:14px}
+.hero .kicker{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--ink3);margin:0 0 8px}
+.hero h1{font-size:clamp(34px,6.4vw,56px);font-weight:700;line-height:1;margin:0 0 10px}
+.hero .sub{font-size:19px;color:var(--ink2);max-width:54ch;margin:0}
+.heroart{margin:22px 0 0;background:var(--board);border:1px solid var(--rule);border-radius:10px;padding:6px 4px 0}
+.draw{stroke-dasharray:1200;stroke-dashoffset:1200;animation:draw 1.8s ease-out .25s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.draw{animation:none;stroke-dashoffset:0}}
+
+section{padding-top:44px}
+.tag{display:inline-block;font-family:var(--sans);font-size:11.5px;font-weight:700;color:var(--ink3);margin-bottom:4px}
+.card{background:var(--board);border:1px solid var(--rule);border-radius:10px;padding:18px 20px;margin:18px 0}
+.card.act{border-left:4px solid var(--violet)}
+.acthead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.acthead h4{margin:0;font-size:17px}
+.badge{font-family:var(--sans);font-size:10.5px;font-weight:700;color:#fff;background:var(--violet);border-radius:999px;padding:2px 8px}
+.hint{font-size:15px;color:var(--ink2);margin:0 0 12px}
+.def{border-left:4px solid var(--blue);background:var(--board);padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0}
+.warn{border-left:4px solid var(--red);background:var(--board);padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0}
+.def p:last-child,.warn p:last-child{margin-bottom:0}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:7px}
+.red{color:var(--red)}.blue{color:var(--blue)}.green{color:var(--green)}.violet{color:var(--violet)}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13.5px;margin:14px 0}
+th,td{border:1px solid var(--rule);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#F5F7F5;font-family:var(--sans);font-size:12.5px;font-weight:700}
+td.l{font-family:var(--serif);font-size:15px;line-height:1.4}
+.tscroll{overflow-x:auto}
+
+/* código y consola */
+pre{margin:14px 0;overflow-x:auto}
+pre.code,pre.out{font-family:var(--mono);font-size:14px;line-height:1.55;border-radius:8px;padding:12px 14px}
+pre.code{background:var(--board);border:1px solid var(--rule)}
+pre.out{background:#F6F7F4;border:1px dashed var(--ink3);color:var(--ink2)}
+pre.out::before{content:'salida';display:block;font-family:var(--sans);font-size:10.5px;font-weight:700;color:var(--ink3);margin-bottom:4px}
+pre.out .e{color:var(--red);font-weight:500}
+pre.out .u{color:var(--blue)}
+.cap{font-family:var(--sans);font-size:12.5px;color:var(--ink3);margin:-8px 0 14px}
+
+/* anatomía del traceback */
+.tb{font-family:var(--mono);font-size:13.5px;background:#F6F7F4;border:1px solid var(--rule);border-radius:8px;padding:6px 0;overflow-x:auto}
+.tb div{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:14px;padding:3px 14px;align-items:baseline}
+.tb div span:first-child{white-space:pre}
+.tb div span:last-child{font-family:var(--sans);font-size:12.5px;color:var(--ink2);white-space:normal}
+.tb .hot{background:var(--hl)}
+@media(max-width:640px){.tb div{grid-template-columns:1fr;gap:0}.tb div span:last-child{padding-bottom:4px}}
+
+/* simuladores de ejecución */
+.simcode{font-family:var(--mono);font-size:14px;background:var(--board);border:1px solid var(--rule);border-radius:8px;padding:8px 0;margin:10px 0;overflow-x:auto}
+.simcode div{white-space:pre;padding:1px 14px 1px 40px;position:relative;border-left:3px solid transparent}
+.simcode div::before{content:attr(data-n);position:absolute;left:10px;color:var(--ink3);font-size:12px}
+.simcode .run{background:#EEF7F1;border-left-color:var(--green)}
+.simcode .err{background:#FBEFEE;border-left-color:var(--red)}
+.simcode .skip{opacity:.38}
+.term{font-family:var(--mono);font-size:14px;background:#F6F7F4;border:1px dashed var(--ink3);border-radius:8px;padding:10px 14px;white-space:pre-wrap;min-height:44px;color:var(--ink2)}
+.term .u{color:var(--blue);font-weight:500}
+.term .e{color:var(--red)}
+.legend{font-family:var(--sans);font-size:12.5px;color:var(--ink3);display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+.btn{font-size:14px;font-weight:500;border:1.5px solid var(--ink);background:var(--board);color:var(--ink);border-radius:7px;padding:8px 14px;transition:background .15s,color .15s}
+.btn:hover{background:var(--ink);color:#fff}
+.btn.sm{font-size:13px;padding:6px 11px}
+.btn.ghost{border-color:var(--rule);color:var(--ink2)}
+.btn.ghost:hover{background:var(--rule2);color:var(--ink)}
+.opt{display:block;width:100%;text-align:left;margin-bottom:8px;font-family:var(--serif);font-size:16px;border:1.5px solid var(--rule);background:var(--board);border-radius:8px;padding:10px 13px;line-height:1.4;color:var(--ink)}
+.opt:hover{border-color:var(--ink3)}
+.opt.ok{border-color:var(--green);background:#EEF7F1}
+.opt.no{border-color:var(--red);background:#FBEFEE}
+.opt.dim{opacity:.5}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.fb{font-family:var(--sans);font-size:14px;margin-top:10px;padding:9px 12px;border-radius:7px;display:none;line-height:1.45}
+.fb.show{display:block}
+.fb.good{background:#EEF7F1;color:#1D5C37;border-left:3px solid var(--green)}
+.fb.bad{background:#FBEFEE;color:#8E2B21;border-left:3px solid var(--red)}
+.fb.info{background:#EEF3FA;color:#174B82;border-left:3px solid var(--blue)}
+.fb code{font-size:.95em}
+.ctrl{font-family:var(--sans);font-size:13px;color:var(--ink2);margin-bottom:4px;display:block}
+.readout{font-family:var(--mono);font-size:14px;color:var(--ink2)}
+.readout b{color:var(--ink)}
+input[type=range]{accent-color:var(--violet);width:100%}
+label.ck{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:13.5px;color:var(--ink2);cursor:pointer}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media(max-width:600px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:14px;border:1.5px solid var(--rule);background:var(--board);border-radius:7px;padding:6px 11px;color:var(--ink)}
+.chip:disabled{opacity:.4;cursor:default}
+.chip.on{border-color:var(--violet);background:#F3EFFB;color:#4B3583}
+.chip.seen{border-color:var(--ink3)}
+.chip.ok{border-color:var(--green);background:#EEF7F1;color:#1D5C37}
+.chip.no{border-color:var(--red);background:#FBEFEE;color:#8E2B21}
+.fcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:10px}
+.fc{height:124px;perspective:800px;background:none;border:0;padding:0}
+.fci{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.fc.flip .fci{transform:rotateY(180deg)}
+.fcf,.fcb{position:absolute;inset:0;backface-visibility:hidden;border-radius:9px;display:flex;align-items:center;justify-content:center;text-align:center;padding:11px;font-family:var(--sans);font-size:13px;line-height:1.35}
+.fcf{background:var(--board);border:1.5px solid var(--rule);color:var(--ink);font-family:var(--mono);font-size:14px}
+.fcb{background:var(--ink);color:#fff;transform:rotateY(180deg);font-weight:500}
+@media(prefers-reduced-motion:reduce){.fci{transition:none}}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--rule);margin-right:4px}
+.dot.on{background:var(--green)}
+.dot.off{background:var(--red)}
+.scorebox{font-family:var(--sans);font-size:15px;font-weight:500}
+.finale{border:3px solid var(--ink);border-radius:12px;padding:22px;background:var(--board);margin-top:26px}
+.tp{counter-reset:tp;list-style:none;padding:0}
+.tp li{border-top:1px solid var(--rule2);padding:10px 0 8px;margin:0}
+.tp .n{font-family:var(--sans);font-weight:700;margin-right:6px}
+.tp .ref{display:block;font-family:var(--sans);font-size:12.5px;color:var(--violet);margin-top:3px}
+footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--rule);font-size:14px;color:var(--ink3)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<aside class="side">
+  <p class="sidehead">Contenido</p>
+  <nav class="toc" id="toc">
+    <a href="#c1">1 · Qué es un error</a>
+    <a href="#c2">2 · Los errores más comunes</a>
+    <a href="#c3">3 · try / except</a>
+    <a href="#c4">4 · Varios except y as</a>
+    <a href="#c5">5 · else y finally</a>
+    <a href="#c6">6 · raise y excepciones propias</a>
+    <a href="#c7">7 · Buenas prácticas y TP 8</a>
+    <a href="#final">8 · Examen final</a>
+  </nav>
+  <div class="prog">
+    <span id="progtxt">0 de 8 actividades</span>
+    <div class="pbar"><i id="progbar"></i></div>
+  </div>
+</aside>
+
+<main class="main">
+
+<div class="hero">
+  <p class="kicker">Programación 1 · Unidad 8</p>
+  <h1>Manejo de errores en Python</h1>
+  <p class="sub">Cómo reconocer un error, leer lo que te dice Python y atraparlo con <code>try</code>, <code>except</code>, <code>else</code> y <code>finally</code> para que tu programa no se rompa. Todo lo que necesitás para las actividades y el TP 8.</p>
+  <div class="heroart">
+    <svg viewBox="0 0 600 180" width="100%" role="img" aria-label="Un trapecista salta desde una plataforma; si falla, lo atrapa la red. El salto es el try, la red es el except.">
+      <line x1="40" y1="30" x2="40" y2="170" stroke="var(--rule)" stroke-width="3"/>
+      <line x1="560" y1="30" x2="560" y2="170" stroke="var(--rule)" stroke-width="3"/>
+      <line x1="20" y1="52" x2="92" y2="52" stroke="var(--ink)" stroke-width="3"/>
+      <line x1="508" y1="52" x2="580" y2="52" stroke="var(--ink)" stroke-width="3"/>
+      <path d="M70 140 Q300 186 530 140" fill="none" stroke="var(--rule)" stroke-width="1.4"/>
+      <path d="M70 140 L100 152 L130 146 L160 158 L190 152 L220 164 L250 158 L280 168 L310 162 L340 168 L370 158 L400 164 L430 152 L460 158 L490 146 L530 140" fill="none" stroke="var(--green)" stroke-width="2"/>
+      <path class="draw" d="M84 46 C 180 -10, 260 10, 300 60 S 330 150, 322 150" fill="none" stroke="var(--red)" stroke-width="2.6" stroke-dasharray="1200"/>
+      <circle cx="322" cy="150" r="6" fill="var(--red)"/>
+      <text x="170" y="22" font-family="IBM Plex Mono,monospace" font-size="15" fill="var(--ink)">try:</text>
+      <text x="350" y="112" font-family="IBM Plex Mono,monospace" font-size="13" fill="var(--red)">ValueError</text>
+      <text x="236" y="134" font-family="IBM Plex Mono,monospace" font-size="15" fill="var(--green)">except:</text>
+      <text x="520" y="24" font-family="Archivo,system-ui,sans-serif" font-size="12" fill="var(--ink3)" text-anchor="middle">el programa sigue</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ================= 1 ================= -->
+<section id="c1">
+  <span class="tag">Capítulo 1 · Video 1 · Actividad I</span>
+  <h2>Qué es un error: sintaxis contra excepciones</h2>
+
+  <p>Tarde o temprano, todo programa se enfrenta a situaciones inesperadas: <mark>la persona escribe texto donde se esperaba un número, un archivo no existe, se intenta dividir por cero</mark>. Si no las controlamos, el programa <b>se rompe</b>, muestra un mensaje técnico y se corta.</p>
+
+  <div class="def"><p><b>Manejo de errores:</b> <mark>nos permite anticipar esos problemas y responder con elegancia, sin que el programa se caiga.</mark></p></div>
+
+  <p>Conviene distinguir <b>dos grandes familias</b> de errores. La diferencia está en <em>cuándo</em> aparecen.</p>
+
+  <div class="grid2">
+    <div class="def" style="margin:0"><p><b>Errores de sintaxis.</b> <mark>Son de escritura: el código está mal escrito y Python ni siquiera puede arrancar</mark> (por ejemplo, olvidar los dos puntos de un <code>if</code>).</p></div>
+    <div class="def" style="margin:0"><p><b>Excepciones.</b> <mark>Ocurren cuando el código es válido pero algo falla durante la ejecución.</mark> Estas son las que podemos manejar.</p></div>
+  </div>
+
+  <h3>Errores de sintaxis: no se ejecuta ni una línea</h3>
+  <p>Los errores de sintaxis ocurren cuando el código no sigue las reglas gramaticales de Python: paréntesis o comillas sin cerrar, palabras reservadas mal usadas, indentación incorrecta, dos puntos que faltan. Son los más fáciles de detectar, porque Python lee todo el archivo antes de empezar y <b>ni siquiera intenta ejecutarlo</b>.</p>
+
+<pre class="code">if True
+    print("¡Esto causará un error!")</pre>
+<pre class="out">  File "programa.py", line 1
+    if True
+           ^
+<span class="e">SyntaxError: expected ':'</span></pre>
+
+<pre class="code">print("Hola)</pre>
+<pre class="out">  File "programa.py", line 1
+    print("Hola)
+          ^
+<span class="e">SyntaxError: unterminated string literal (detected at line 1)</span></pre>
+  <p class="cap">El <code>^</code> apunta al lugar donde Python se dio cuenta del problema: en el primero falta el <code>:</code> y en el segundo no se cierran las comillas.</p>
+
+  <h3>Excepciones: el programa arranca y se cae en el medio</h3>
+  <p>Con una excepción el código está bien escrito, así que Python lo empieza a ejecutar. El problema aparece recién al llegar a la línea que falla. Fijate que en este ejemplo <b>la primera línea sí se imprimió</b>:</p>
+
+<pre class="code">nombre = "Ana"
+print("Hola", nombre)
+print(variable_inexistente)
+print("Chau")</pre>
+
+  <h3>Cómo leer el mensaje</h3>
+  <p>Este es el mensaje que aparece al ejecutar el programa de arriba. Se lee <b>de abajo hacia arriba</b>: la última línea te dice qué pasó y las de arriba, dónde pasó.</p>
+  <div class="tb" role="group" aria-label="Salida del programa, línea por línea, con la explicación de cada parte">
+    <div><span class="u">Hola Ana</span><span>Lo que se ejecutó antes del error.</span></div>
+    <div><span>Traceback (most recent call last):</span><span>Empieza el informe del error.</span></div>
+    <div><span>  File "programa.py", line 3, in &lt;module&gt;</span><span><b>Dónde:</b> archivo y número de línea.</span></div>
+    <div><span>    print(variable_inexistente)</span><span>La línea que falló.</span></div>
+    <div><span>          ^^^^^^^^^^^^^^^^^^^^</span><span>La parte exacta (aparece en versiones recientes de Python).</span></div>
+    <div class="hot"><span>NameError: name 'variable_inexistente' is not defined</span><span><b>Qué pasó:</b> tipo de excepción + descripción.</span></div>
+  </div>
+  <p class="cap">"Chau" nunca se imprime: el programa se cortó en la línea 3. En estos ejemplos, la ruta del archivo aparece acortada a <code>programa.py</code>.</p>
+
+  <div class="card act">
+    <div class="acthead"><h4>Decidí si es de sintaxis o una excepción</h4><span class="badge">Actividad 1</span></div>
+    <p class="hint">Preguntate: ¿Python puede empezar a ejecutar este código, o ni siquiera arranca?</p>
+    <div id="a1"></div>
+  </div>
+
+  <div class="card">
+    <div id="q1"></div>
+  </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section id="c2">
+  <span class="tag">Capítulo 2 · Video 2 · Actividad I</span>
+  <h2>Los errores más comunes</h2>
+  <p>Cada excepción tiene un nombre que dice qué salió mal. Si reconocés el nombre, ya sabés dónde buscar. Estas son las que vas a ver más seguido.</p>
+
+  <h3><code>NameError</code>: un nombre que no existe</h3>
+  <div class="def"><p><mark>Aparece cuando intentamos usar una variable, función o módulo que no ha sido definido previamente.</mark> Python no puede encontrar el nombre al que estamos haciendo referencia.</p></div>
+  <p>Causas frecuentes: el nombre está mal escrito, se usa antes de asignarle un valor, falta un <code>import</code> o se confundieron mayúsculas y minúsculas.</p>
+<pre class="code">print(variable_inexistente)</pre>
+<pre class="out"><span class="e">NameError: name 'variable_inexistente' is not defined</span></pre>
+  <div class="warn"><p><b>Ojo:</b> Python distingue mayúsculas de minúsculas. <code>edad</code>, <code>Edad</code> y <code>EDAD</code> son tres variables distintas.</p></div>
+
+  <h3><code>TypeError</code>: tipos que no se pueden combinar</h3>
+  <div class="def"><p><mark>Surge cuando intentamos realizar operaciones con tipos de datos incompatibles.</mark> Por ejemplo, no podemos sumar directamente un número con un texto.</p></div>
+<pre class="code">"5" + 3</pre>
+<pre class="out"><span class="e">TypeError: can only concatenate str (not "int") to str</span></pre>
+<pre class="code">tiempo_en_minutos = "120"
+tiempo_en_horas = tiempo_en_minutos / 60</pre>
+<pre class="out"><span class="e">TypeError: unsupported operand type(s) for /: 'str' and 'int'</span></pre>
+  <p class="cap"><code>"120"</code> va entre comillas, así que es un texto aunque parezca un número.</p>
+
+  <h3><code>ZeroDivisionError</code>: dividir por cero</h3>
+  <div class="def"><p><mark>Ocurre cuando intentamos dividir un número por cero</mark>, una operación matemáticamente indefinida que Python no puede procesar.</p></div>
+  <p>Suele aparecer cuando el denominador es una variable, adentro de un bucle o cuando el número lo ingresa el usuario y nadie lo validó.</p>
+<pre class="code">10 / 0</pre>
+<pre class="out"><span class="e">ZeroDivisionError: division by zero</span></pre>
+
+  <h3><code>IndexError</code>: una posición que no existe</h3>
+  <div class="def"><p><mark>Aparece cuando intentamos acceder a una posición que no existe en una lista, tupla o string.</mark> Recordá que los índices en Python empiezan en 0.</p></div>
+<pre class="code">frutas = ["Naranja", "Durazno", "Manzana"]   # posiciones 0, 1 y 2
+print(frutas[5])</pre>
+<pre class="out"><span class="e">IndexError: list index out of range</span></pre>
+<pre class="code">palabra = "Hola"
+print(palabra[10])</pre>
+<pre class="out"><span class="e">IndexError: string index out of range</span></pre>
+
+  <h3><code>ValueError</code>: el tipo está bien, el valor no</h3>
+  <div class="def"><p><mark>Un valor del tipo correcto pero inadecuado</mark>: <code>int()</code> espera un texto, pero no cualquier texto: tiene que representar un número entero.</p></div>
+<pre class="code">int("hola")</pre>
+<pre class="out"><span class="e">ValueError: invalid literal for int() with base 10: 'hola'</span></pre>
+<pre class="code">int("2.5")</pre>
+<pre class="out"><span class="e">ValueError: invalid literal for int() with base 10: '2.5'</span></pre>
+  <div class="warn"><p><b>Ojo:</b> <code>"2.5"</code> es un número, pero <b>no es entero</b>, y <code>int()</code> lo rechaza igual. Por eso, cuando uses <code>int()</code>, el mensaje para el usuario tiene que pedir un <b>número entero</b>, no "un número".</p></div>
+
+  <h3><code>KeyError</code>: una clave que no está</h3>
+  <div class="def"><p><mark>Clave inexistente en un diccionario.</mark> Es el equivalente del <code>IndexError</code> para diccionarios.</p></div>
+<pre class="code">precios = {"pan": 1500}
+print(precios["leche"])</pre>
+<pre class="out"><span class="e">KeyError: 'leche'</span></pre>
+
+  <h3>Resumen</h3>
+  <div class="tscroll">
+  <table>
+    <tr><th>Excepción</th><th>Cuándo ocurre</th><th>Ejemplo</th></tr>
+    <tr><td>NameError</td><td class="l">Usás un nombre que no está definido</td><td>print(x_no_definida)</td></tr>
+    <tr><td>TypeError</td><td class="l">Operación entre tipos incompatibles</td><td>"a" + 5</td></tr>
+    <tr><td>ZeroDivisionError</td><td class="l">División por cero</td><td>10 / 0</td></tr>
+    <tr><td>IndexError</td><td class="l">Índice fuera de rango en una lista, tupla o string</td><td>[1, 2, 3][5]</td></tr>
+    <tr><td>ValueError</td><td class="l">Un valor del tipo correcto pero inadecuado</td><td>int("hola")</td></tr>
+    <tr><td>KeyError</td><td class="l">Clave inexistente en un diccionario</td><td>{"a": 1}["b"]</td></tr>
+    <tr><td>FileNotFoundError</td><td class="l">Se intenta abrir un archivo que no existe</td><td>—</td></tr>
+  </table>
+  </div>
+
+  <div class="card act">
+    <div class="acthead"><h4>Predecí qué excepción lanza cada línea</h4><span class="badge">Actividad 2</span></div>
+    <p class="hint">Leé el código como lo leería Python y elegí el nombre de la excepción.</p>
+    <div id="a2"></div>
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section id="c3">
+  <span class="tag">Capítulo 3 · Video 3 · Actividad II</span>
+  <h2><code>try</code> / <code>except</code>: atrapar una excepción</h2>
+
+  <div class="def"><p><mark>El código “riesgoso” (el que podría fallar) se pone dentro del <code>try</code>.</mark> Si ocurre una excepción, en lugar de romperse, Python salta al bloque <code>except</code>, que decide qué hacer.</p></div>
+
+  <p class="hint"><b>Imagen mental:</b> el <code>try</code>/<code>except</code> es como la red de seguridad de un trapecista. El artista intenta la pirueta (el <code>try</code>): si sale bien, la red no se usa. Si falla, la red lo atrapa (el <code>except</code>) y evita el desastre. El espectáculo continúa en lugar de terminar de golpe.</p>
+
+<pre class="code">try:
+    edad = int(input("Ingresá tu edad: "))
+    print(f"El año que viene tendrás {edad + 1}")
+except ValueError:
+    print("Eso no es un número entero.")</pre>
+
+  <ul>
+    <li>Si la persona escribe un número entero, todo funciona y <b>el <code>except</code> se ignora por completo</b>.</li>
+    <li>Si escribe, por ejemplo, <code>hola</code>, <code>int()</code> falla y se lanza un <code>ValueError</code>. En ese momento se abandona el resto del <code>try</code> (el <code>print</code> del año no se ejecuta) y <code>except ValueError</code> atrapa justo ese error.</li>
+  </ul>
+
+  <div class="card act">
+    <div class="acthead"><h4>Ejecutá el programa con distintas entradas</h4><span class="badge">Actividad 3</span></div>
+    <p class="hint">Elegí qué escribe la persona y mirá qué líneas se ejecutan. Probá al menos una entrada que funcione y una que falle.</p>
+    <div id="a3"></div>
+  </div>
+
+  <div class="warn">
+    <p><b>Ojo:</b> <code>except ValueError</code> atrapa <b>solo</b> <code>ValueError</code>. Si en el <code>try</code> ocurre otra excepción, ningún <code>except</code> coincide y el programa se corta igual:</p>
+<pre class="code">try:
+    resultado = 10 / 0
+except ValueError:
+    print("Eso no es un número entero.")
+print("Fin")</pre>
+<pre class="out">Traceback (most recent call last):
+  File "programa.py", line 2, in &lt;module&gt;
+    resultado = 10 / 0
+                ~~~^~~
+<span class="e">ZeroDivisionError: division by zero</span></pre>
+    <p>No aparece "Fin": la red estaba puesta para otro tipo de caída.</p>
+  </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section id="c4">
+  <span class="tag">Capítulo 4 · Video 4 · Actividad II</span>
+  <h2>Varios <code>except</code> y <code>as</code></h2>
+
+  <div class="def"><p>Una misma porción de código puede fallar de distintas maneras. <mark>Podemos escribir varios bloques <code>except</code>, uno por cada tipo de error, para responder de forma específica a cada uno. Python ejecuta el primero que coincida.</mark></p></div>
+
+<pre class="code">try:
+    a = int(input("Numerador: "))
+    b = int(input("Denominador: "))
+    print(a / b)
+except ValueError:
+    print("Tenés que ingresar números enteros.")
+except ZeroDivisionError:
+    print("No se puede dividir por cero.")</pre>
+
+  <div class="card act">
+    <div class="acthead"><h4>Descubrí qué <code>except</code> atrapa cada caso</h4><span class="badge">Actividad 4</span></div>
+    <p class="hint">Probá las cuatro entradas. Fijate en qué línea salta el error y a cuál <code>except</code> va.</p>
+    <div id="a4"></div>
+  </div>
+
+  <h3>Guardar el error con <code>as</code></h3>
+  <p><mark>Al capturar una excepción podemos guardarla en una variable con <code>as</code> para ver su mensaje.</mark></p>
+<pre class="code">try:
+    numero = int("abc")
+except ValueError as e:
+    print("Error:", e)</pre>
+<pre class="out">Error: invalid literal for int() with base 10: 'abc'</pre>
+
+  <p>Con esa variable también se puede averiguar <b>qué tipo</b> de error ocurrió, usando <code>type(e).__name__</code>:</p>
+<pre class="code">try:
+    division = 12 / 0
+except ZeroDivisionError as e:
+    print("Ocurrió el siguiente error:", type(e).__name__)</pre>
+<pre class="out">Ocurrió el siguiente error: ZeroDivisionError</pre>
+
+  <h3>Varias excepciones en un mismo <code>except</code></h3>
+  <p>Si dos errores distintos se responden igual, no hace falta repetir el bloque: se escriben juntos, entre paréntesis y separados por coma.</p>
+<pre class="code">for texto in ["8", "cero", "0"]:
+    try:
+        print(100 / int(texto))
+    except (ValueError, ZeroDivisionError) as e:
+        print("No se pudo:", type(e).__name__)</pre>
+<pre class="out">12.5
+No se pudo: ValueError
+No se pudo: ZeroDivisionError</pre>
+
+  <h3><code>Exception</code>: la red para lo que no previste</h3>
+  <p>Dentro de las excepciones múltiples se puede incluir <code>except Exception as e:</code> <mark>para aquellos casos donde el programa falla, pero la falla no se debe a ninguno de los errores listados en las excepciones anteriores.</mark></p>
+<pre class="code">numeros = [10, 20, 30]
+try:
+    posicion = int(input("Posición: "))
+    print(numeros[posicion])
+except ValueError:
+    print("Tenés que ingresar un número entero.")
+except Exception as e:
+    print("Ocurrió el siguiente error:", type(e).__name__)</pre>
+<pre class="out">Posición: <span class="u">7</span>
+Ocurrió el siguiente error: IndexError</pre>
+  <div class="warn"><p><b>Ojo con el orden:</b> como Python ejecuta el <b>primer</b> <code>except</code> que coincide, y <code>Exception</code> coincide con casi todo, <code>except Exception</code> va <b>siempre al final</b>. Si lo ponés primero, los <code>except</code> específicos de abajo no se ejecutan nunca.</p></div>
+
+  <div class="card"><div id="q4"></div></div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section id="c5">
+  <span class="tag">Capítulo 5 · Video 5 · Actividad II</span>
+  <h2><code>else</code> y <code>finally</code></h2>
+
+  <p>La estructura se completa con dos bloques opcionales:</p>
+  <div class="grid2">
+    <div class="def" style="margin:0"><p><b><code>else</code></b> <mark>se ejecuta solo si no hubo ninguna excepción en el <code>try</code>.</mark> Sirve para separar la lógica exitosa.</p></div>
+    <div class="def" style="margin:0"><p><b><code>finally</code></b> <mark>se ejecuta siempre, haya error o no.</mark> Se usa para tareas de limpieza, como cerrar un archivo.</p></div>
+  </div>
+
+  <div class="card" style="padding:10px 8px 4px">
+    <svg viewBox="0 0 560 250" width="100%" role="img" aria-label="Diagrama de flujo: el try intenta; si hay un error que coincide va al except, si no hay error va al else; en los dos casos después se ejecuta el finally y el programa sigue.">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink2)"/></marker></defs>
+      <g font-family="IBM Plex Mono,monospace" font-size="14" text-anchor="middle">
+        <rect x="200" y="10" width="160" height="38" rx="7" fill="var(--board)" stroke="var(--ink)" stroke-width="1.6"/>
+        <text x="280" y="34">try: intentar</text>
+        <path d="M280 48 V72" stroke="var(--ink2)" stroke-width="1.6" marker-end="url(#ar)"/>
+        <polygon points="280,74 350,100 280,126 210,100" fill="var(--board)" stroke="var(--ink)" stroke-width="1.6"/>
+        <text x="280" y="105" font-family="Archivo,system-ui,sans-serif" font-size="14">¿hubo error?</text>
+        <path d="M210 100 H120 V142" stroke="var(--red)" stroke-width="1.6" fill="none" marker-end="url(#ar)"/>
+        <text x="160" y="92" font-family="Archivo,system-ui,sans-serif" font-size="12.5" fill="var(--red)">sí</text>
+        <path d="M350 100 H440 V142" stroke="var(--green)" stroke-width="1.6" fill="none" marker-end="url(#ar)"/>
+        <text x="398" y="92" font-family="Archivo,system-ui,sans-serif" font-size="12.5" fill="var(--green)">no</text>
+        <rect x="40" y="144" width="160" height="38" rx="7" fill="#FBEFEE" stroke="var(--red)" stroke-width="1.6"/>
+        <text x="120" y="168">except: manejar</text>
+        <rect x="360" y="144" width="160" height="38" rx="7" fill="#EEF7F1" stroke="var(--green)" stroke-width="1.6"/>
+        <text x="440" y="168">else: seguir</text>
+        <path d="M120 182 V214 H198" stroke="var(--ink2)" stroke-width="1.6" fill="none" marker-end="url(#ar)"/>
+        <path d="M440 182 V214 H362" stroke="var(--ink2)" stroke-width="1.6" fill="none" marker-end="url(#ar)"/>
+        <rect x="200" y="196" width="160" height="38" rx="7" fill="var(--board)" stroke="var(--blue)" stroke-width="1.6"/>
+        <text x="280" y="220">finally: siempre</text>
+      </g>
+    </svg>
+  </div>
+  <p class="cap">El <code>try</code> intenta; si hay error va al <code>except</code>, si no, al <code>else</code>; el <code>finally</code> corre en todos los casos.</p>
+
+<pre class="code">try:
+    numero = int(input("Ingresá un número: "))
+except ValueError:
+    print("No era un número.")
+else:
+    print(f"El doble es {numero * 2}")
+finally:
+    print("Gracias por usar el programa.")</pre>
+
+  <div class="card act">
+    <div class="acthead"><h4>Armá la salida del programa</h4><span class="badge">Actividad 5</span></div>
+    <p class="hint">Tocá, en orden, las líneas que se imprimen para cada entrada. Las que no se imprimen, no las toques.</p>
+    <div id="a5"></div>
+  </div>
+
+  <h3>Volver a pedir el dato: <code>while True</code></h3>
+  <p>Para no tener que volver a ejecutar el programa cada vez que aparece un error, se puede encerrar el <code>try</code> en un bucle <code>while</code>. El <code>break</code> va en el <code>else</code>: <b>solo se sale del bucle cuando no hubo error</b>.</p>
+<pre class="code">while True:
+    try:
+        numerador = int(input("Numerador: "))
+        divisor = int(input("Divisor: "))
+        division = numerador / divisor
+    except ValueError:
+        print("Tenés que ingresar números enteros. Probá de nuevo.")
+    except ZeroDivisionError:
+        print("No se puede dividir por cero. Probá de nuevo.")
+    else:
+        print(division)
+        break
+    finally:
+        print("Fin del intento.")
+print("Listo.")</pre>
+<pre class="out">Numerador: <span class="u">12</span>
+Divisor: <span class="u">0</span>
+No se puede dividir por cero. Probá de nuevo.
+Fin del intento.
+Numerador: <span class="u">12</span>
+Divisor: <span class="u">abc</span>
+Tenés que ingresar números enteros. Probá de nuevo.
+Fin del intento.
+Numerador: <span class="u">12</span>
+Divisor: <span class="u">4</span>
+3.0
+Fin del intento.
+Listo.</pre>
+  <p class="cap">En azul, lo que escribió la persona. "Fin del intento." aparece en <b>cada vuelta</b>, incluso en la última, cuando el <code>else</code> ejecuta el <code>break</code>: el <code>finally</code> corre siempre.</p>
+  <div class="warn"><p><b>Ojo:</b> dentro de un <code>while True</code>, usá siempre un <code>except</code> con el tipo de error (<code>except ValueError</code>). Un <code>except:</code> sin tipo atrapa hasta el intento de cortar el programa con Ctrl+C, y el bucle no termina nunca.</p></div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section id="c6">
+  <span class="tag">Capítulo 6 · Video 6 · Actividad II</span>
+  <h2><code>raise</code> y excepciones propias</h2>
+  <p>Hasta acá atrapamos errores que lanza Python. Pero también <mark>podemos lanzar errores a propósito con <code>raise</code>, e incluso definir nuestras propias excepciones creando una clase que herede de <code>Exception</code>.</mark></p>
+
+<pre class="code">class SaldoInsuficiente(Exception):
+    pass
+
+def extraer(saldo, monto):
+    if monto > saldo:
+        raise SaldoInsuficiente("No hay saldo suficiente")
+    return saldo - monto
+
+try:
+    nuevo_saldo = extraer(1000, 5000)
+    print("Nuevo saldo:", nuevo_saldo)
+except SaldoInsuficiente as error:
+    print("Rechazado:", error)</pre>
+<pre class="out">Rechazado: No hay saldo suficiente</pre>
+
+  <ul>
+    <li><code>class SaldoInsuficiente(Exception): pass</code> crea un tipo de error nuevo. Hereda de <code>Exception</code>, así que se comporta como cualquier otra excepción.</li>
+    <li><code>raise</code> la lanza cuando la regla del problema no se cumple (sacar más de lo que hay).</li>
+    <li>El <code>try</code> llama a <code>extraer</code> con un monto demasiado grande, lo que dispara la excepción. El <code>except</code> la atrapa y, gracias a <code>as error</code>, puede mostrar el mensaje que le pusimos.</li>
+  </ul>
+
+  <div class="card act">
+    <div class="acthead"><h4>Hacé una extracción</h4><span class="badge">Actividad 6</span></div>
+    <p class="hint">El saldo es 1000. Mové el monto y probá una extracción que se pueda hacer y otra que no. Después sacá el <code>try</code> para ver qué pasa sin red.</p>
+    <div id="a6"></div>
+  </div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section id="c7">
+  <span class="tag">Capítulo 7 · Video 7 · Práctica</span>
+  <h2>Buenas prácticas y cómo encarar el TP 8</h2>
+
+  <div class="def"><p><b>Buenas prácticas.</b> <mark>No uses <code>except:</code> a secas para atrapar “cualquier cosa” y seguir como si nada. Capturá los errores específicos que esperás</mark>; así no escondés errores reales y tus mensajes son útiles. <mark class="p">Manejar errores no es disimularlos, es responder a ellos.</mark></p></div>
+
+  <ul>
+    <li><b>Sé específico con las excepciones:</b> capturá tipos de errores concretos en lugar de usar un <code>except</code> genérico. Así es más fácil depurar y mantener el código.</li>
+    <li><b>Mantené el <code>try</code> chico:</b> incluí solo el código que realmente puede fallar. Así es más fácil identificar dónde ocurrió el problema.</li>
+    <li><b>Dá mensajes claros:</b> que le digan al usuario qué salió mal y cómo solucionarlo.</li>
+    <li><b>Documentá tus excepciones:</b> explicá por qué manejás ciertos errores y qué alternativa le das al usuario cuando ocurren.</li>
+  </ul>
+
+  <div class="grid2">
+    <div>
+      <span class="ctrl red">Evitá</span>
+<pre class="code" style="margin-top:0">try:
+    cantidad = int(input("Cantidad: "))
+except:
+    print("Error")</pre>
+    </div>
+    <div>
+      <span class="ctrl green">Preferí</span>
+<pre class="code" style="margin-top:0">try:
+    cantidad = int(input("Cantidad: "))
+except ValueError:
+    print("La cantidad tiene que ser un número entero.")
+else:
+    print("Pediste", cantidad)</pre>
+    </div>
+  </div>
+  <p class="cap">El de la izquierda esconde cualquier problema detrás de "Error". El de la derecha dice qué pasó y qué hacer.</p>
+
+  <div class="card act">
+    <div class="acthead"><h4>Verdadero o falso</h4><span class="badge">Actividad 7</span></div>
+    <p class="hint">Son confusiones típicas. Leé la explicación aunque aciertes.</p>
+    <div id="a7"></div>
+  </div>
+
+  <div class="card act">
+    <div class="acthead"><h4>Poné cada cosa en su bloque</h4><span class="badge">Actividad 8</span></div>
+    <p class="hint">Estás armando un programa que pide un número. ¿En qué bloque va cada parte?</p>
+    <div id="a8"></div>
+  </div>
+
+  <h3>El Trabajo Práctico 8</h3>
+  <p><b>Objetivo:</b> dominar el uso de estructuras de excepciones en Python para manejar el flujo del programa al encontrar distintos tipos de errores.</p>
+  <p>Los ejercicios 1 a 5 usan este mismo código base:</p>
+<pre class="code">a = 10
+b = input("Introduce un número: ")
+result = a / b
+print(f"Resultado: {result}")
+
+
+numbers = [1, 2, 3]
+print(numbers[5])</pre>
+  <p class="hint">Pista para el ejercicio 1: <code>input()</code> siempre devuelve un texto (<code>str</code>), aunque la persona escriba un número.</p>
+
+  <ol class="tp">
+    <li><span class="n">1.</span>Identificá los errores con comentarios <code>#</code> en las líneas afectadas: tipo de error y por qué ocurre.<span class="ref">Capítulos 1 y 2</span></li>
+    <li><span class="n">2.</span>Arreglá los errores para que el programa funcione <b>sin usar excepciones</b>.<span class="ref">Capítulo 2: qué causa cada error</span></li>
+    <li><span class="n">3.</span>Dejá los errores originales y agregá <code>try</code>/<code>except</code> para que el programa no se frene.<span class="ref">Capítulo 3</span></li>
+    <li><span class="n">4.</span>Igual que el 3, con excepciones múltiples según los tipos de error detectados.<span class="ref">Capítulo 4</span></li>
+    <li><span class="n">5.</span>Igual que el 4, agregando <code>else</code> y <code>finally</code>.<span class="ref">Capítulo 5</span></li>
+    <li><span class="n">6.</span>Un programa que pide un número: si es válido lo imprime; si no es numérico, imprime <code>"Debe ingresar un número válido"</code>; ante cualquier otro error, <code>"Se produjo un error inesperado"</code> junto con el error.<span class="ref">Capítulo 4: <code>as e</code> y <code>Exception</code> al final</span></li>
+    <li><span class="n">7.</span>Igual que el 6, pero el usuario puede volver a intentar después de un error.<span class="ref">Capítulo 5: <code>while True</code> con <code>break</code> en el <code>else</code></span></li>
+  </ol>
+  <p class="hint">Antes de entregar, fijate en el aula cómo se entrega (nombre y formato del archivo). Respetá los textos exactos que pide cada consigna.</p>
+
+  <h3>Repaso rápido</h3>
+  <p class="hint">Tocá cada tarjeta para darla vuelta. No cuentan para el progreso.</p>
+  <div class="fcgrid" id="fc"></div>
+</section>
+
+<!-- ================= examen ================= -->
+<section id="final">
+  <span class="tag">Capítulo 8</span>
+  <h2>Examen final</h2>
+  <p class="hint">15 preguntas sobre toda la unidad. Al terminar te decimos qué capítulos conviene repasar.</p>
+  <div class="card act" style="border-left-color:var(--red)"><div id="quiz"></div></div>
+  <div class="finale">
+    <h3 style="margin-top:0">Tu recorrido</h3>
+    <p style="margin:0 0 10px" class="readout" id="finalstate">Todavía no completaste actividades.</p>
+    <div class="pbar"><i id="progbar2"></i></div>
+  </div>
+  <footer>Hecho con el material de la cátedra de Programación 1 (TUP · UTN), Unidad 8 "Manejo de errores": los apuntes y notebooks de las Actividades I y II, la presentación de la microteaching y la consigna del Trabajo Práctico 8. El código funciona en Python 3.10 o superior. Cada ejemplo se ejecutó antes de publicarlo y la salida que se muestra es la real; la ruta del archivo aparece acortada.</footer>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ===== progreso ===== */
+const DONE=new Set(), TOTAL=8;
+function done(id){
+  if(DONE.has(id))return; DONE.add(id);
+  const p=Math.min(100,DONE.size/TOTAL*100);
+  document.getElementById('progbar').style.width=p+'%';
+  document.getElementById('progbar2').style.width=p+'%';
+  document.getElementById('progtxt').textContent=DONE.size+' de '+TOTAL+' actividades';
+  document.getElementById('finalstate').textContent = DONE.size>=TOTAL
+    ? 'Completaste todas las actividades. Ahora sí, el examen.'
+    : 'Completaste '+DONE.size+' de '+TOTAL+' actividades.';
+}
+
+/* ===== índice ===== */
+const links=[...document.querySelectorAll('.toc a')], secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+addEventListener('scroll',()=>{let i=secs.findIndex(s=>s&&s.getBoundingClientRect().top>130);
+  if(i===-1)i=secs.length;i=Math.max(0,i-1);links.forEach((a,j)=>a.classList.toggle('on',j===i));},{passive:true});
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+/* baraja las opciones: devuelve [opciones en orden nuevo, índice nuevo de la correcta] */
+function mezclar(opts,correcta){
+  const idx=opts.map((_,i)=>i);
+  for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]];}
+  return [idx.map(i=>opts[i]), idx.indexOf(correcta)];
+}
+
+/* ===== opción múltiple suelta ===== */
+function mcq(host,q,opts,exp,cb){
+  opts=mezclar(opts,0)[0];
+  const el=document.getElementById(host);
+  el.innerHTML='<p style="margin:0 0 8px;font-family:var(--sans);font-size:15px;font-weight:500">'+q+'</p><div class="mo"></div><div class="fb"></div>';
+  const mo=el.querySelector('.mo'), fb=el.querySelector('.fb');
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.className='opt'; b.innerHTML=o[0];
+    b.onclick=()=>{
+      mo.querySelectorAll('.opt').forEach(x=>{x.disabled=true;x.classList.add('dim')});
+      b.classList.remove('dim'); b.classList.add(o[1]?'ok':'no');
+      if(!o[1]){const g=opts.findIndex(z=>z[1]);mo.children[g].classList.remove('dim');mo.children[g].classList.add('ok');}
+      fb.className='fb '+(o[1]?'good':'bad')+' show'; fb.innerHTML=exp; if(cb)cb();
+    };
+    mo.appendChild(b);
+  });
+}
+
+/* ===== varias preguntas seguidas ===== */
+function mcqList(host,items,cb){
+  const box=document.getElementById(host); let n=0;
+  items.forEach(q=>{
+    const d=document.createElement('div');
+    d.style.cssText='padding:13px 0;border-top:1px solid var(--rule2)';
+    d.innerHTML='<p style="margin:0 0 9px;font-family:var(--sans);font-size:15px;font-weight:500">'+q[0]+'</p><div class="mo row"></div><div class="fb"></div>';
+    box.appendChild(d);
+    const mo=d.querySelector('.mo'), fb=d.querySelector('.fb');
+    q[1].forEach((o,j)=>{
+      const b=document.createElement('button'); b.className='btn sm ghost'; b.textContent=o;
+      b.onclick=()=>{
+        [...mo.children].forEach(x=>x.disabled=true);
+        const ok=j===q[2];
+        b.style.cssText='border-color:var(--'+(ok?'green':'red')+');color:var(--'+(ok?'green':'red')+')';
+        if(!ok)mo.children[q[2]].style.cssText='border-color:var(--green);color:var(--green)';
+        fb.className='fb '+(ok?'good':'bad')+' show'; fb.innerHTML=(ok?'Bien. ':'No. ')+q[3];
+        n++; if(n===items.length&&cb) cb();
+      };
+      mo.appendChild(b);
+    });
+  });
+}
+
+/* ===== clasificador ===== */
+function clasif(host,cats,casos,pid,mono){
+  const box=document.getElementById(host); let n=0;
+  casos.forEach(c=>{
+    const d=document.createElement('div');
+    d.style.cssText='padding:11px 0;border-top:1px solid var(--rule2)';
+    d.innerHTML=(mono?'<pre class="code" style="margin:0 0 8px">'+esc(c[0])+'</pre>':'<p style="margin:0 0 8px;font-size:16px">'+c[0]+'</p>')+'<div class="row"></div><div class="fb"></div>';
+    box.appendChild(d);
+    const row=d.querySelector('.row'), fb=d.querySelector('.fb');
+    cats.forEach((cat,j)=>{
+      const b=document.createElement('button'); b.className='btn sm ghost'; b.textContent=cat;
+      if(mono) b.style.fontFamily='var(--mono)';
+      b.onclick=()=>{
+        [...row.children].forEach(x=>x.disabled=true);
+        const ok=j===c[1];
+        b.style.cssText+=';border-color:var(--'+(ok?'green':'red')+');color:var(--'+(ok?'green':'red')+')';
+        if(!ok)[...row.children][c[1]].style.cssText+=';border-color:var(--green);color:var(--green)';
+        fb.className='fb '+(ok?'good':'bad')+' show';
+        fb.innerHTML=(ok?'':'Era <b>'+cats[c[1]]+'</b>. ')+c[2];
+        n++; if(n===casos.length) done(pid);
+      };
+      row.appendChild(b);
+    });
+  });
+}
+
+/* ===== simulador de ejecución línea por línea =====
+   sim(host, lineas, casos, pid, minimo)
+   caso: {l:'etiqueta', run:[...], err:n|-1, out:'html de la terminal', exp:'explicación', ok:bool} */
+function sim(host,lines,casos,pid,need){
+  const box=document.getElementById(host);
+  box.innerHTML='<span class="ctrl">La persona escribe:</span><div class="chips inps"></div>'+
+    '<div class="simcode"></div>'+
+    '<div class="legend"><span><i style="background:#EEF7F1;border:1px solid var(--green)"></i>se ejecuta</span><span><i style="background:#FBEFEE;border:1px solid var(--red)"></i>salta la excepción</span><span><i style="background:var(--rule)"></i>no se ejecuta</span></div>'+
+    '<span class="ctrl" style="margin-top:12px">Terminal</span><div class="term">Elegí una entrada.</div><div class="fb"></div>';
+  const inps=box.querySelector('.inps'), code=box.querySelector('.simcode'), term=box.querySelector('.term'), fb=box.querySelector('.fb');
+  lines.forEach((l,i)=>{const d=document.createElement('div');d.dataset.n=i+1;d.textContent=l||' ';code.appendChild(d);});
+  const seen=new Set();
+  casos.forEach((c,k)=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent=c.l;
+    b.onclick=()=>{
+      inps.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); b.classList.add('on','seen');
+      [...code.children].forEach((d,i)=>{d.className=i===c.err?'err':(c.run.includes(i)?'run':'skip');});
+      term.innerHTML=c.out; fb.className='fb '+(c.ok?'good':'info')+' show'; fb.innerHTML=c.exp;
+      seen.add(k);
+      if(need(seen,casos)) done(pid);
+    };
+    inps.appendChild(b);
+  });
+}
+
+/* ===== flashcards ===== */
+function flashcards(host,cards){
+  const g=document.getElementById(host);
+  cards.forEach(k=>{
+    const b=document.createElement('button'); b.className='fc'; b.setAttribute('aria-label',k[0]);
+    b.innerHTML='<div class="fci"><div class="fcf">'+k[0]+'</div><div class="fcb">'+k[1]+'</div></div>';
+    b.onclick=()=>b.classList.toggle('flip'); g.appendChild(b);
+  });
+}
+
+/* ===== examen: cada pregunta dice de qué capítulo es ===== */
+function examen(host,Q,nombres){
+  const box=document.getElementById(host); let sc=0,ans=0; const mal=new Set();
+  const head=document.createElement('div');
+  head.innerHTML='<div class="row" style="justify-content:space-between;margin-bottom:6px">'+
+    '<span class="scorebox" id="qs">0 de '+Q.length+' correctas</span><span id="qd"></span></div>';
+  box.appendChild(head);
+  const dots=head.querySelector('#qd');
+  Q.forEach(()=>{const s=document.createElement('span');s.className='dot';dots.appendChild(s);});
+  Q.forEach((q0,i)=>{
+    const [ops,ci]=mezclar(q0[1],q0[2]); const q=[q0[0],ops,ci,q0[3],q0[4]];
+    const d=document.createElement('div');
+    d.style.cssText='padding:14px 0;border-top:1px solid var(--rule2)';
+    d.innerHTML='<p style="margin:0 0 9px;font-family:var(--sans);font-size:15.5px;font-weight:500">'+(i+1)+'. '+q[0]+'</p><div class="mo"></div><div class="fb"></div>';
+    box.appendChild(d);
+    const mo=d.querySelector('.mo'), fb=d.querySelector('.fb');
+    q[1].forEach((o,j)=>{
+      const b=document.createElement('button'); b.className='opt'; b.innerHTML=o;
+      b.onclick=()=>{
+        mo.querySelectorAll('.opt').forEach(x=>{x.disabled=true;x.classList.add('dim')});
+        const ok=j===q[2]; b.classList.remove('dim'); b.classList.add(ok?'ok':'no');
+        if(!ok){mo.children[q[2]].classList.remove('dim');mo.children[q[2]].classList.add('ok');mal.add(q[4]);}
+        fb.className='fb '+(ok?'good':'bad')+' show'; fb.innerHTML=q[3];
+        dots.children[i].classList.add(ok?'on':'off'); if(ok)sc++;
+        ans++; document.getElementById('qs').textContent=sc+' de '+Q.length+' correctas';
+        if(ans===Q.length){
+          const caps=[...mal].sort((a,b)=>a-b);
+          const lista=caps.map(c=>'<a href="#c'+c+'">'+c+' · '+nombres[c]+'</a>').join(', ');
+          let msg;
+          if(sc===Q.length) msg='Perfecto. Estás para encarar el TP 8.';
+          else if(sc>=12) msg='Muy bien. Repasá solo lo que fallaste: '+lista+'.';
+          else if(sc>=8) msg='Vas bien, pero hay huecos. Volvé a estos capítulos y rehacé su actividad: '+lista+'.';
+          else msg='Conviene releer la unidad desde el capítulo '+(caps[0]||1)+' y hacer las actividades antes de volver a intentar. Los capítulos donde fallaste: '+lista+'.';
+          const r=document.createElement('div'); r.className='fb info show'; r.style.marginTop='14px';
+          r.innerHTML='<b>'+sc+'/'+Q.length+'.</b> '+msg;
+          box.appendChild(r);
+        }
+      };
+      mo.appendChild(b);
+    });
+  });
+}
+
+/* ================= actividades ================= */
+
+/* 1: sintaxis o excepción */
+clasif('a1',['Error de sintaxis','Excepción'],[
+  ['if True\n    print("Hola")',0,'Falta el <code>:</code> después del <code>if</code>. Python ni siquiera arranca: <code>SyntaxError: expected \':\'</code>.'],
+  ['10 / 0',1,'El código está bien escrito; falla recién al ejecutar la división: <code>ZeroDivisionError</code>.'],
+  ['print("Hola)',0,'Las comillas no se cierran. Es un error de escritura, así que el programa no llega a ejecutarse.'],
+  ['int("hola")',1,'La línea está bien escrita. Falla durante la ejecución, cuando <code>int()</code> recibe un texto que no es un número: <code>ValueError</code>.'],
+  ['print(variable_inexistente)',1,'Está bien escrito; Python descubre que el nombre no existe recién cuando llega a esa línea: <code>NameError</code>.'],
+  ['try:\n    numero = int("abc")\nexcept ValueError as e\n    print("Error:", e)',0,'Falta el <code>:</code> al final de <code>except ValueError as e</code>. Es un <code>SyntaxError</code>: el programa ni siquiera llega a ejecutarse, y el <code>try</code> no puede hacer nada.'],
+  ['"5" + 3',1,'Bien escrito, pero al ejecutarse no se puede sumar un texto con un número: <code>TypeError</code>.']
+],'a1',true);
+
+mcq('q1','En el ejemplo de <code>variable_inexistente</code>, se imprimió "Hola Ana" antes del error. ¿Qué te dice eso?',[
+  ['Que el programa empezó a ejecutarse: es una excepción, no un error de sintaxis.',1],
+  ['Que Python ignora los errores hasta el final del archivo.',0],
+  ['Que es un error de sintaxis en la línea 3.',0]
+],'Con un error de sintaxis no se ejecuta <b>ninguna</b> línea. Si algo se imprimió, el programa arrancó y se cayó en el medio: eso es una excepción.');
+
+/* 2: predecir la excepción */
+clasif('a2',['NameError','TypeError','ZeroDivisionError','IndexError','ValueError','KeyError'],[
+  ['colores = ["rojo", "azul"]\nprint(colores[2])',3,'La lista tiene dos elementos, en las posiciones 0 y 1. La posición 2 no existe.'],
+  ['int("2.5")',4,'Le pasás un texto a <code>int()</code>, así que el tipo es correcto; el valor no, porque 2.5 no es entero.'],
+  ['total = 100\nprint(Total)',0,'<code>Total</code> con mayúscula no es <code>total</code>: Python distingue mayúsculas de minúsculas.'],
+  ['"Precio: " + 1500',1,'No se puede sumar un texto (<code>str</code>) con un número (<code>int</code>).'],
+  ['notas = {"Ana": 9}\nprint(notas["Luis"])',5,'"Luis" no es una clave del diccionario.'],
+  ['divisor = 0\nprint(100 / divisor)',2,'El divisor vale 0 cuando se hace la cuenta.'],
+  ['palabra = "Hola"\nprint(palabra[4])',3,'"Hola" tiene 4 letras, en las posiciones 0 a 3. La 4 no existe.'],
+  ['edad = int("veinte")',4,'<code>int()</code> recibe un texto, pero "veinte" no representa un número.']
+],'a2',true);
+
+/* 3: simulador try/except (edad) */
+sim('a3',[
+  'try:',
+  '    edad = int(input("Ingresá tu edad: "))',
+  '    print(f"El año que viene tendrás {edad + 1}")',
+  'except ValueError:',
+  '    print("Eso no es un número entero.")'
+],[
+  {l:'20',run:[0,1,2],err:-1,ok:true,out:'Ingresá tu edad: <span class="u">20</span>\nEl año que viene tendrás 21',
+   exp:'Todo el <code>try</code> se ejecuta sin errores, así que <b>el <code>except</code> se saltea completo</b>.'},
+  {l:'35',run:[0,1,2],err:-1,ok:true,out:'Ingresá tu edad: <span class="u">35</span>\nEl año que viene tendrás 36',
+   exp:'Otro número entero: mismo camino, el <code>except</code> no se usa.'},
+  {l:'hola',run:[0,3,4],err:1,ok:false,out:'Ingresá tu edad: <span class="u">hola</span>\nEso no es un número entero.',
+   exp:'<code>int("hola")</code> lanza <code>ValueError</code> en la línea 2. <b>La línea 3 no se ejecuta</b>: Python salta directo al <code>except ValueError</code>, que coincide.'},
+  {l:'2.5',run:[0,3,4],err:1,ok:false,out:'Ingresá tu edad: <span class="u">2.5</span>\nEso no es un número entero.',
+   exp:'2.5 es un número, pero no entero: <code>int("2.5")</code> también lanza <code>ValueError</code>. Por eso el mensaje dice "número entero".'}
+],'a3',(s,c)=>(s.has(0)||s.has(1))&&(s.has(2)||s.has(3)));
+
+/* 4: simulador varios except */
+sim('a4',[
+  'try:',
+  '    a = int(input("Numerador: "))',
+  '    b = int(input("Denominador: "))',
+  '    print(a / b)',
+  'except ValueError:',
+  '    print("Tenés que ingresar números enteros.")',
+  'except ZeroDivisionError:',
+  '    print("No se puede dividir por cero.")'
+],[
+  {l:'10 y 4',run:[0,1,2,3],err:-1,ok:true,out:'Numerador: <span class="u">10</span>\nDenominador: <span class="u">4</span>\n2.5',
+   exp:'Sin errores: se ejecuta todo el <code>try</code> y ningún <code>except</code>.'},
+  {l:'10 y 0',run:[0,1,2,6,7],err:3,ok:false,out:'Numerador: <span class="u">10</span>\nDenominador: <span class="u">0</span>\nNo se puede dividir por cero.',
+   exp:'Los dos <code>int()</code> funcionan; la división de la línea 4 lanza <code>ZeroDivisionError</code>. Python revisa los <code>except</code> en orden: <code>ValueError</code> no coincide, <code>ZeroDivisionError</code> sí.'},
+  {l:'diez y 4',run:[0,4,5],err:1,ok:false,out:'Numerador: <span class="u">diez</span>\nTenés que ingresar números enteros.',
+   exp:'Falla en la línea 2, así que <b>el denominador ni siquiera se pide</b>. Lo atrapa el primer <code>except</code> que coincide: <code>ValueError</code>.'},
+  {l:'10 y 2.5',run:[0,1,4,5],err:2,ok:false,out:'Numerador: <span class="u">10</span>\nDenominador: <span class="u">2.5</span>\nTenés que ingresar números enteros.',
+   exp:'El numerador se convierte bien; el denominador "2.5" no es entero, así que la línea 3 lanza <code>ValueError</code>.'}
+],'a4',(s,c)=>s.size===c.length);
+
+mcq('q4','Querés responder lo mismo si el usuario escribe texto o si pone un cero. ¿Cuál es la forma correcta?',[
+  ['<code>except (ValueError, ZeroDivisionError):</code>',1],
+  ['<code>except ValueError or ZeroDivisionError:</code>',0],
+  ['<code>except ValueError and ZeroDivisionError:</code>',0]
+],'Varias excepciones en un mismo <code>except</code> van <b>entre paréntesis</b>, separadas por coma. Con <code>or</code> o <code>and</code>, Python resuelve esa expresión y queda <b>un solo</b> tipo: con <code>or</code> atrapa solo <code>ValueError</code>, y con <code>and</code>, solo <code>ZeroDivisionError</code>. El otro error corta el programa.');
+
+/* 5: armar la salida (else / finally) */
+(function(){
+  const host=document.getElementById('a5');
+  const pool=['No era un número.','El doble es 42','Gracias por usar el programa.'];
+  const rondas=[
+    {inp:'21',sol:[1,2],exp:'Sin error: no hay <code>except</code>, se ejecuta el <code>else</code> y después el <code>finally</code>.'},
+    {inp:'hola',sol:[0,2],exp:'Con error: se ejecuta el <code>except</code>, <b>el <code>else</code> no</b>, y el <code>finally</code> aparece igual porque corre siempre.'}
+  ];
+  let r=0,sel=[]; const ok=new Set();
+  host.innerHTML='<div class="row" style="margin-bottom:8px"><span class="ctrl" style="margin:0">Entrada:</span><div class="chips rd"></div></div>'+
+    '<span class="ctrl">Líneas que podrían imprimirse</span><div class="chips pool"></div>'+
+    '<span class="ctrl" style="margin-top:12px">Tu salida</span><div class="term out"></div>'+
+    '<div class="row" style="margin-top:10px"><button class="btn sm">Comprobar</button><button class="btn ghost sm">Borrar</button></div><div class="fb"></div>';
+  const rd=host.querySelector('.rd'), pl=host.querySelector('.pool'), out=host.querySelector('.out'), fb=host.querySelector('.fb');
+  const [bc,bb]=host.querySelectorAll('.btn');
+  function pintar(){
+    rd.innerHTML='';
+    rondas.forEach((x,i)=>{const b=document.createElement('button');b.className='chip'+(i===r?' on':'')+(ok.has(i)?' ok':'');
+      b.textContent=x.inp;b.onclick=()=>{r=i;sel=[];fb.className='fb';pintar();};rd.appendChild(b);});
+    pl.innerHTML='';
+    pool.forEach((t,i)=>{const b=document.createElement('button');b.className='chip';b.textContent=t;b.disabled=sel.includes(i);
+      b.onclick=()=>{sel.push(i);pintar();};pl.appendChild(b);});
+    out.innerHTML='Ingresá un número: <span class="u">'+rondas[r].inp+'</span>\n'+sel.map(i=>esc(pool[i])).join('\n');
+  }
+  bb.onclick=()=>{sel=[];fb.className='fb';pintar();};
+  bc.onclick=()=>{
+    const s=rondas[r].sol, bien=sel.length===s.length&&sel.every((v,i)=>v===s[i]);
+    if(bien){ok.add(r);fb.className='fb good show';fb.innerHTML=rondas[r].exp+(ok.size<rondas.length?' Ahora probá con la otra entrada.':'');
+      if(ok.size===rondas.length)done('a5');pintar();}
+    else if(sel.length===s.length&&sel[0]===s[1]){fb.className='fb bad show';fb.innerHTML='Las líneas están bien, pero el orden no: el <code>finally</code> se ejecuta <b>al final</b>.';}
+    else{fb.className='fb bad show';fb.innerHTML='Todavía no. Preguntate: con la entrada "'+rondas[r].inp+'", ¿falla <code>int()</code>? Si falla, corre el <code>except</code>; si no, el <code>else</code>. ¿Y qué bloque corre siempre?';}
+  };
+  pintar();
+})();
+
+/* 6: extracción con raise */
+(function(){
+  const host=document.getElementById('a6');
+  host.innerHTML='<label class="ctrl" for="monto">Monto a extraer: <b class="readout" id="mv">500</b></label>'+
+    '<input type="range" id="monto" min="0" max="3000" step="100" value="500">'+
+    '<div class="row" style="margin:8px 0"><label class="ck"><input type="checkbox" id="sintry"> Sacar el <code>try</code>/<code>except</code></label></div>'+
+    '<div class="simcode" id="scode"></div><span class="ctrl">Terminal</span><div class="term" id="sterm"></div><div class="fb" id="sfb"></div>';
+  const m=document.getElementById('monto'), ck=document.getElementById('sintry'), code=document.getElementById('scode'), term=document.getElementById('sterm'), fb=document.getElementById('sfb');
+  const vistos=new Set();
+  function draw(){
+    const v=+m.value, sin=ck.checked, falla=v>1000;
+    document.getElementById('mv').textContent=v;
+    const base=[['class SaldoInsuficiente(Exception):',''],['    pass',''],['',''],
+      ['def extraer(saldo, monto):',''],['    if monto > saldo:','run'],['        raise SaldoInsuficiente("No hay saldo suficiente")',falla?'err':'skip'],['    return saldo - monto',falla?'skip':'run'],['','']];
+    const L=sin?base.concat([
+      ['nuevo_saldo = extraer(1000, '+v+')',falla?'err':'run'],['print("Nuevo saldo:", nuevo_saldo)',falla?'skip':'run']
+    ]):base.concat([
+      ['try:','run'],['    nuevo_saldo = extraer(1000, '+v+')',falla?'err':'run'],['    print("Nuevo saldo:", nuevo_saldo)',falla?'skip':'run'],
+      ['except SaldoInsuficiente as error:',falla?'run':'skip'],['    print("Rechazado:", error)',falla?'run':'skip']
+    ]);
+    code.innerHTML='';
+    L.forEach((l,i)=>{const d=document.createElement('div');d.dataset.n=i+1;d.textContent=l[0]||' ';if(l[1])d.className=l[1];code.appendChild(d);});
+    if(!falla){
+      term.innerHTML='Nuevo saldo: '+(1000-v);
+      fb.className='fb good show'; fb.innerHTML='El monto no supera el saldo: no se lanza nada y <code>extraer</code> devuelve <code>1000 - '+v+'</code>.'+(sin?' Sin <code>try</code> anda igual, porque no hubo error.':'');
+      vistos.add('ok');
+    } else if(!sin){
+      term.innerHTML='Rechazado: No hay saldo suficiente';
+      fb.className='fb info show'; fb.innerHTML='<code>'+v+' &gt; 1000</code>: <code>raise</code> lanza <code>SaldoInsuficiente</code>. El <code>print</code> del nuevo saldo no se ejecuta y el <code>except</code> la atrapa; <code>error</code> tiene el mensaje que le pusimos.';
+      vistos.add('raise');
+    } else {
+      term.innerHTML='Traceback (most recent call last):\n  File "programa.py", line 9, in &lt;module&gt;\n    nuevo_saldo = extraer(1000, '+v+')\n  File "programa.py", line 6, in extraer\n    raise SaldoInsuficiente("No hay saldo suficiente")\n<span class="e">SaldoInsuficiente: No hay saldo suficiente</span>';
+      fb.className='fb bad show'; fb.innerHTML='Sin red: la excepción que lanzaste con <code>raise</code> corta el programa como cualquier otra. En la última línea aparece <b>el nombre de tu clase</b> y tu mensaje.';
+      vistos.add('sin');
+    }
+    if(vistos.has('ok')&&vistos.has('raise')) done('a6');
+  }
+  m.oninput=draw; ck.onchange=draw; draw();
+})();
+
+/* 7: verdadero o falso */
+mcqList('a7',[
+  ['<code>except:</code> a secas es lo más seguro, porque atrapa cualquier error.',['Verdadero','Falso'],1,'Atrapa todo, incluso los errores que no esperabas, y los esconde. Capturá los errores específicos que esperás.'],
+  ['Conviene poner dentro del <code>try</code> solo el código que puede fallar.',['Verdadero','Falso'],0,'Un <code>try</code> chico hace más fácil saber dónde ocurrió el problema.'],
+  ['<code>except ValueError</code> también atrapa un <code>ZeroDivisionError</code>.',['Verdadero','Falso'],1,'Cada <code>except</code> atrapa solo el tipo que nombra. Si ninguno coincide, el programa se corta igual.'],
+  ['<code>finally</code> se ejecuta aunque no haya habido ningún error.',['Verdadero','Falso'],0,'<code>finally</code> corre siempre, haya error o no.'],
+  ['Si tu archivo tiene un error de sintaxis, un <code>try</code>/<code>except</code> en ese mismo archivo lo evita.',['Verdadero','Falso'],1,'Con un error de sintaxis el programa ni siquiera arranca, así que el <code>try</code> nunca llega a ejecutarse. Hay que corregir la escritura.'],
+  ['<code>input()</code> devuelve un texto aunque la persona escriba un número.',['Verdadero','Falso'],0,'Siempre devuelve <code>str</code>. Por eso hay que convertirlo con <code>int()</code>, y ahí puede aparecer un <code>ValueError</code>.']
+],()=>done('a7'));
+
+/* 8: cada cosa en su bloque */
+clasif('a8',['try','except','else','finally'],[
+  ['Convertir lo que escribió la persona con <code>int()</code>.',0,'Es lo que puede fallar: va en el <code>try</code>.'],
+  ['Avisar que el dato no es un número entero.',1,'Es la respuesta al error: va en el <code>except ValueError</code>.'],
+  ['Mostrar el resultado, solo si la conversión salió bien.',2,'El <code>else</code> se ejecuta solo si no hubo excepción.'],
+  ['Un mensaje que tiene que aparecer siempre, haya error o no.',3,'Eso es exactamente el <code>finally</code>.'],
+  ['Cerrar un archivo, haya salido bien o mal.',3,'Tareas de limpieza como cerrar un archivo: <code>finally</code>.'],
+  ['El <code>break</code> que sale del <code>while True</code> cuando el dato es válido.',2,'Solo hay que salir si no hubo error, y eso es el <code>else</code>. En el <code>finally</code> saldría siempre, aunque el dato fuera inválido.']
+],'a8');
+
+/* flashcards */
+flashcards('fc',[
+  ['SyntaxError','Código mal escrito: Python ni siquiera arranca'],
+  ['NameError','Usás un nombre que no está definido'],
+  ['TypeError','Operación entre tipos incompatibles: "a" + 5'],
+  ['ZeroDivisionError','División por cero: 10 / 0'],
+  ['IndexError','Posición que no existe en una lista, tupla o string'],
+  ['ValueError','Tipo correcto, valor inadecuado: int("hola")'],
+  ['KeyError','Clave inexistente en un diccionario'],
+  ['FileNotFoundError','Se intenta abrir un archivo que no existe'],
+  ['try','El código que puede fallar'],
+  ['except','Qué hacer si ocurre ese error'],
+  ['else','Solo si no hubo excepción'],
+  ['finally','Siempre, haya error o no']
+]);
+
+/* examen */
+examen('quiz',[
+  ['¿Cuándo aparece un error de sintaxis?',['Antes de ejecutar: el código está mal escrito y Python ni siquiera arranca.','Cuando el usuario escribe texto en lugar de un número.','Al dividir por cero.','Solo dentro de un <code>try</code>.'],0,'Los errores de sintaxis son de escritura: Python lee el archivo, ve que no respeta las reglas y no ejecuta nada.',1],
+  ['Un programa imprime "Hola Ana" y después muestra un <code>NameError</code>. ¿Qué fue?',['Una excepción: el programa arrancó y se cayó durante la ejecución.','Un error de sintaxis.','Un aviso que no corta el programa.','Un error del sistema operativo.'],0,'Si algo llegó a imprimirse, el programa se estaba ejecutando. Eso es una excepción.',1],
+  ['En un mensaje de error, ¿qué línea dice qué tipo de error ocurrió?',['La última.','La primera, "Traceback (most recent call last)".','La que empieza con File.','Ninguna, hay que adivinarlo.'],0,'La última línea tiene el tipo de excepción y su descripción; las de arriba dicen dónde ocurrió.',1],
+  ['¿Qué lanza <code>"5" + 3</code>?',['<code>TypeError</code>','<code>ValueError</code>','<code>SyntaxError</code>','Nada, da 8.'],0,'No se puede sumar un texto con un número: tipos incompatibles.',2],
+  ['¿Qué lanza <code>int("2.5")</code>?',['<code>ValueError</code>','<code>TypeError</code>','Nada, devuelve 2.','<code>ZeroDivisionError</code>'],0,'<code>int()</code> recibe un texto (tipo correcto), pero "2.5" no representa un número entero (valor inadecuado).',2],
+  ['<code>frutas = ["Naranja", "Durazno", "Manzana"]</code>. ¿Qué pasa con <code>frutas[3]</code>?',['<code>IndexError</code>: las posiciones van de 0 a 2.','Devuelve "Manzana".','<code>KeyError</code>','Devuelve <code>None</code>.'],0,'Los índices empiezan en 0: tres elementos ocupan las posiciones 0, 1 y 2.',2],
+  ['<code>precios = {"pan": 1500}</code>. ¿Qué lanza <code>precios["leche"]</code>?',['<code>KeyError</code>','<code>IndexError</code>','<code>NameError</code>','<code>ValueError</code>'],0,'En un diccionario, una clave que no existe lanza <code>KeyError</code>.',2],
+  ['En el ejemplo de la edad, la persona escribe "hola". ¿Se ejecuta el <code>print</code> del año que viene?',['No: al fallar <code>int()</code>, se abandona el resto del <code>try</code> y se salta al <code>except</code>.','Sí, y después se ejecuta el <code>except</code>.','Sí, pero muestra un error.','Depende de la versión de Python.'],0,'Cuando se lanza la excepción, las líneas que quedaban en el <code>try</code> no se ejecutan.',3],
+  ['Un <code>try</code> tiene solo <code>except ValueError</code> y dentro ocurre un <code>ZeroDivisionError</code>. ¿Qué pasa?',['El programa se corta con <code>ZeroDivisionError</code>.','Lo atrapa el <code>except ValueError</code>.','Python lo ignora y sigue.','Se ejecuta el <code>else</code>.'],0,'Cada <code>except</code> atrapa solo su tipo. Si ninguno coincide, la excepción no se maneja.',3],
+  ['Con varios <code>except</code>, ¿cuál ejecuta Python?',['El primero que coincida con el tipo de error.','Todos los que coincidan.','El último.','Siempre el primero, coincida o no.'],0,'Python los revisa en orden y ejecuta el primero que coincida. Por eso <code>except Exception</code> va al final.',4],
+  ['¿Qué imprime <code>except ValueError as e: print("Error:", e)</code> si falló <code>int("abc")</code>?',['<code>Error: invalid literal for int() with base 10: \'abc\'</code>','<code>Error: ValueError</code>','<code>Error: e</code>','Nada.'],0,'<code>e</code> guarda la excepción; al imprimirla se ve su mensaje. Para el nombre del tipo se usa <code>type(e).__name__</code>.',4],
+  ['¿Cuándo se ejecuta el <code>else</code> de un <code>try</code>?',['Solo si no hubo ninguna excepción en el <code>try</code>.','Siempre.','Solo si hubo una excepción.','Cuando ningún <code>except</code> coincide.'],0,'El <code>else</code> separa la lógica exitosa: corre solo si el <code>try</code> terminó sin errores.',5],
+  ['En el programa del doble, la persona escribe "hola". ¿Qué se imprime?',['"No era un número." y "Gracias por usar el programa."','Solo "No era un número."','"El doble es..." y "Gracias por usar el programa."','Solo "Gracias por usar el programa."'],0,'Falla <code>int()</code>: se ejecuta el <code>except</code>, el <code>else</code> no, y el <code>finally</code> corre siempre.',5],
+  ['¿Cómo se define una excepción propia como <code>SaldoInsuficiente</code>?',['Con una clase que hereda de <code>Exception</code>, y se lanza con <code>raise</code>.','Con una función que devuelve un error.','Con <code>except SaldoInsuficiente:</code>.','Escribiendo <code>print("Error")</code>.'],0,'<code>class SaldoInsuficiente(Exception): pass</code> crea el tipo; <code>raise SaldoInsuficiente("...")</code> la lanza.',6],
+  ['¿Cuál es la buena práctica?',['Capturar los errores específicos que esperás.','Usar <code>except:</code> a secas para que nunca se corte.','Poner todo el programa dentro de un solo <code>try</code>.','No mostrar mensajes para no asustar al usuario.'],0,'Capturar lo específico evita esconder errores reales y permite dar mensajes útiles.',7]
+],{1:'Qué es un error',2:'Los errores más comunes',3:'try / except',4:'Varios except y as',5:'else y finally',6:'raise y excepciones propias',7:'Buenas prácticas'});
+</script>
+</body>
+</html>
